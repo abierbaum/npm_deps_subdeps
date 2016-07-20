@@ -247,15 +247,41 @@ describe('Events', function () {
 			obj.removeEventListener('test', spy, foo2);
 
 			expect(obj.listens('test')).to.be(false);
+
+			// Add and remove a listener without context
+			obj.addEventListener('test', spy);
+			obj.removeEventListener('test', spy);
+
+			expect(obj.listens('test')).to.be(false);
 		});
 
 		it('makes sure an event is not triggered if a listener is removed during dispatch', function () {
 			var obj = new L.Evented(),
-			    spy = sinon.spy();
+			    spy = sinon.spy(),
+			    spy2 = sinon.spy(),
+			    spy3 = sinon.spy(),
+			    foo = {};
 
+			/* without context */
 			obj.addEventListener('test', function () { obj.removeEventListener('test', spy); });
 			obj.addEventListener('test', spy);
 			obj.fireEvent('test');
+
+			expect(spy.called).to.be(false);
+
+			/* with context */
+			obj.addEventListener('test2', function () { obj.removeEventListener('test2', spy2, foo); }, foo);
+			obj.addEventListener('test2', spy2, foo);
+			obj.fireEvent('test2');
+		});
+
+		it('makes sure an event is not triggered if all listeners are removed during dispatch', function () {
+			var obj = new L.Evented(),
+			    spy = sinon.spy();
+
+			obj.addEventListener('test', function () { obj.removeEventListener('test'); });
+			obj.addEventListener('test', spy);
+			obj.fire('test');
 
 			expect(spy.called).to.be(false);
 		});
@@ -299,6 +325,20 @@ describe('Events', function () {
 
 			obj.fire();
 			expect(spy3.called).to.be(true);
+		});
+
+		it('does not add twice the same function', function () {
+			var obj = new L.Evented(),
+			    spy = sinon.spy();
+
+			/* register without context */
+			obj.on("test", spy);
+			obj.on("test", spy);
+
+			/* Should be called once */
+			obj.fire("test");
+
+			expect(spy.callCount).to.eql(1);
 		});
 	});
 
@@ -412,5 +452,62 @@ describe('Events', function () {
 			expect(spy1.callCount).to.be(1);
 			expect(spy2.callCount).to.be(2);
 		});
+
+		it('can fire event where child has no listeners', function () {
+			var obj = new L.Evented(),
+			    parent = new L.Evented(),
+			    spy1 = sinon.spy(),
+			    spy2 = sinon.spy();
+
+			/* register without context */
+			obj.on('test', spy1);
+			parent.on('test2', spy2);
+
+			obj.addEventParent(parent);
+
+			/* Should be called once */
+			obj.fire('test2', null, true);
+
+			expect(spy1.callCount).to.eql(0);
+			expect(spy2.callCount).to.eql(1);
+		});
 	});
+
+	describe('#listens', function () {
+		it('is false if there is no event handler', function () {
+			var obj = new L.Evented(),
+			    spy = sinon.spy();
+
+			expect(obj.listens('test')).to.be(false);
+		});
+
+		it('is true if there is an event handler', function () {
+			var obj = new L.Evented(),
+			    spy = sinon.spy();
+
+			obj.on('test', spy);
+			expect(obj.listens('test')).to.be(true);
+		});
+
+		it('is false if event handler has been removed', function () {
+			var obj = new L.Evented(),
+			    spy = sinon.spy();
+
+			obj.on('test', spy);
+			obj.off('test', spy);
+			expect(obj.listens('test')).to.be(false);
+		});
+
+		it('changes for a "once" handler', function () {
+			var obj = new L.Evented(),
+			    spy = sinon.spy();
+
+			obj.once('test', spy);
+			expect(obj.listens('test')).to.be(true);
+
+			obj.fire('test');
+			expect(obj.listens('test')).to.be(false);
+		});
+	});
+
 });
