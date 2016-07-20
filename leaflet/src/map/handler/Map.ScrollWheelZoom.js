@@ -6,7 +6,7 @@
 // @section Interaction Options
 L.Map.mergeOptions({
 	// @section Mousewheel options
-	// @option scrollWheelZoom: Boolean = true
+	// @option scrollWheelZoom: Boolean|String = true
 	// Whether the map can be zoomed by using the mouse wheel. If passed `'center'`,
 	// it will zoom to the center of the view regardless of where the mouse was.
 	scrollWheelZoom: true,
@@ -16,11 +16,11 @@ L.Map.mergeOptions({
 	// user can't zoom via wheel more often than once per 40 ms.
 	wheelDebounceTime: 40,
 
-	// @option wheelPxPerZoomLevel: Number = 50
+	// @option wheelPxPerZoomLevel: Number = 60
 	// How many scroll pixels (as reported by [L.DomEvent.getWheelDelta](#domevent-getwheeldelta))
 	// mean a change of one full zoom level. Smaller values will make wheel-zooming
 	// faster (and vice versa).
-	wheelPxPerZoomLevel: 50
+	wheelPxPerZoomLevel: 60
 });
 
 L.Map.ScrollWheelZoom = L.Handler.extend({
